@@ -1,0 +1,598 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    background: #f4f5f7;
+    color: #222;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+.container {
+    width: min(100% - 32px, 900px);
+    margin: 50px auto;
+}
+
+
+/* =========================
+   헤더
+========================= */
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px;
+
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.page-header p {
+    margin: 0;
+
+    color: #777;
+    font-size: 15px;
+}
+
+
+/* =========================
+   검색
+========================= */
+
+.search-box {
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+}
+
+.search-box input {
+    flex: 1;
+
+    height: 48px;
+
+    padding: 0 16px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background: white;
+
+    font-size: 15px;
+
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: #999;
+}
+
+.search-box button {
+    width: 90px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: #222;
+    color: white;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: opacity 0.15s ease;
+}
+
+.search-box button:hover {
+    opacity: 0.85;
+}
+
+
+/* =========================
+   거래 탭
+========================= */
+
+.trade-tabs {
+    display: flex;
+
+    gap: 8px;
+
+    margin-bottom: 20px;
+}
+
+.trade-tab {
+    padding: 10px 22px;
+
+    border: 1px solid #ddd;
+    border-radius: 20px;
+
+    background: white;
+    color: #555;
+
+    cursor: pointer;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.trade-tab:hover {
+    border-color: #bbb;
+}
+
+.trade-tab.active {
+    background: #222;
+    color: white;
+
+    border-color: #222;
+}
+
+
+/* =========================
+   상태
+========================= */
+
+#status {
+    margin: 20px 0;
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   거래 카드
+========================= */
+
+.trade-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 16px 18px;
+
+    margin-bottom: 12px;
+
+    background: white;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.04);
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.trade-card:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 14px rgba(0, 0, 0, 0.08);
+}
+
+
+/* =========================
+   선수 카드
+========================= */
+
+.player-card {
+    position: relative;
+
+    width: 110px;
+    height: 145px;
+
+    flex-shrink: 0;
+
+    overflow: hidden;
+
+    border-radius: 8px;
+
+    background: #222;
+
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+
+/* 시즌 배경 */
+
+.card-season {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    z-index: 1;
+}
+
+
+/* 선수 이미지 */
+
+.card-player {
+    position: absolute;
+
+    left: 50%;
+    bottom: 18px;
+
+    width: 105%;
+    height: 88%;
+
+    transform: translateX(-50%);
+
+    object-fit: contain;
+    object-position: center bottom;
+
+    z-index: 2;
+}
+
+
+/* 강화 숫자 */
+
+.card-grade {
+    position: absolute;
+
+    top: 7px;
+    left: 7px;
+
+    z-index: 3;
+
+    min-width: 30px;
+
+    padding: 4px 7px;
+
+    border-radius: 5px;
+
+    background: rgba(0, 0, 0, 0.78);
+
+    color: white;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    text-align: center;
+}
+
+
+/* 선수 이름 */
+
+.card-player-name {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    z-index: 3;
+
+    padding: 7px 4px 5px;
+
+    background:
+        linear-gradient(
+            transparent,
+            rgba(0, 0, 0, 0.9)
+        );
+
+    color: white;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: center;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================
+   거래 정보
+========================= */
+
+.trade-info {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+/* 구매 / 판매 */
+
+.trade-type {
+    display: inline-block;
+
+    margin-bottom: 6px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.trade-type.buy {
+    color: #168a45;
+}
+
+.trade-type.sell {
+    color: #d33;
+}
+
+
+/* 선수 이름 */
+
+.player-name {
+    margin-bottom: 5px;
+
+    font-size: 19px;
+    font-weight: 800;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* 시즌 + 강화 */
+
+.season-info {
+    color: #555;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* 날짜 */
+
+.trade-date {
+    margin-top: 7px;
+
+    color: #999;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   거래 금액
+========================= */
+
+.trade-value {
+    min-width: 150px;
+
+    text-align: right;
+
+    font-size: 18px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+/* =========================
+   거래 타입별 금액
+========================= */
+
+.trade-card:has(.trade-type.buy) .trade-value {
+    color: #168a45;
+}
+
+.trade-card:has(.trade-type.sell) .trade-value {
+    color: #d33;
+}
+
+
+/* =========================
+   페이지네이션
+========================= */
+
+.pagination {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    margin-top: 30px;
+}
+
+.pagination button {
+    min-width: 38px;
+    height: 38px;
+
+    padding: 0 10px;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    background: white;
+
+    color: #333;
+
+    cursor: pointer;
+
+    font-size: 14px;
+}
+
+.pagination button:hover {
+    background: #f5f5f5;
+}
+
+.pagination button.active {
+    background: #222;
+
+    color: white;
+
+    border-color: #222;
+}
+
+
+/* =========================
+   거래내역 없음
+========================= */
+
+.empty-message {
+    padding: 40px 20px;
+
+    text-align: center;
+
+    color: #999;
+
+    background: white;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+}
+
+
+/* =========================
+   모바일
+========================= */
+
+@media (max-width: 600px) {
+
+    .container {
+        width: min(100% - 20px, 900px);
+        margin: 25px auto;
+    }
+
+    .page-header {
+        margin-bottom: 22px;
+    }
+
+    .page-header h1 {
+        font-size: 26px;
+    }
+
+    .search-box {
+        gap: 8px;
+    }
+
+    .search-box button {
+        width: 75px;
+    }
+
+    .trade-tabs {
+        gap: 6px;
+    }
+
+    .trade-tab {
+        flex: 1;
+        padding: 9px 10px;
+        text-align: center;
+    }
+
+    /* 거래 카드 */
+
+    .trade-card {
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    /* 선수 카드 */
+
+    .player-card {
+        width: 72px;
+        height: 95px;
+    }
+
+    .card-grade {
+        top: 5px;
+        left: 5px;
+
+        min-width: 24px;
+
+        padding: 3px 5px;
+
+        font-size: 12px;
+    }
+
+    .card-player-name {
+        font-size: 10px;
+        padding: 5px 3px 3px;
+    }
+
+    /* 선수 정보 */
+
+    .player-name {
+        font-size: 16px;
+    }
+
+    .season-info {
+        font-size: 13px;
+    }
+
+    .trade-date {
+        font-size: 12px;
+    }
+
+    /* 금액 */
+
+    .trade-value {
+        min-width: auto;
+        font-size: 15px;
+    }
+}
+
+
+/* =========================
+   아주 작은 화면
+========================= */
+
+@media (max-width: 420px) {
+
+    .trade-card {
+        display: grid;
+
+        grid-template-columns: 65px 1fr;
+
+        gap: 10px;
+    }
+
+    .player-card {
+        width: 65px;
+        height: 86px;
+
+        grid-row: span 2;
+    }
+
+    .trade-info {
+        min-width: 0;
+    }
+
+    .trade-value {
+        grid-column: 2;
+
+        text-align: left;
+
+        font-size: 16px;
+    }
+}

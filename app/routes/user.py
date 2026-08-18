@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.schemas.user import UserResponse
+from app.services.nexon_client import NexonAPIError, NexonClient
 from app.services.user_service import UserService
-from app.services.nexon_client import NexonClient, NexonAPIError
 
 
 router = APIRouter(

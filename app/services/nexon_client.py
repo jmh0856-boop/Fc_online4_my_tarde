@@ -4,67 +4,73 @@ from app.core.config import settings
 
 
 class NexonAPIError(Exception):
-    pass
+    """NEXON Open API 호출 중 발생한 오류"""
 
 
 class NexonClient:
+    BASE_URL = "https://open.api.nexon.com"
 
     def __init__(self):
-        self.base_url = settings.nexon_base_url
-
         self.headers = {
             "x-nxopen-api-key": settings.nexon_api_key,
         }
 
-    async def get_ouid(self, nickname: str) -> str:
-        url = f"{self.base_url}/fconline/v1/id"
-
-        async with httpx.AsyncClient() as client:
+    async def _get(
+        self,
+        path: str,
+        params: dict | None = None,
+    ):
+        async with httpx.AsyncClient(
+            base_url=self.BASE_URL,
+            headers=self.headers,
+            timeout=10.0,
+        ) as client:
             response = await client.get(
-                url,
-                headers=self.headers,
-                params={
-                    "nickname": nickname,
-                },
+                path,
+                params=params,
             )
 
         if response.status_code != 200:
+            try:
+                error_data = response.json()
+            except Exception:
+                error_data = response.text
+
             raise NexonAPIError(
-                f"NEXON API 오류: "
-                f"status={response.status_code}, "
-                f"body={response.text}"
-            )
-
-        data = response.json()
-
-        if "ouid" not in data:
-            raise NexonAPIError(
-                f"응답에 ouid가 없습니다: {data}"
-            )
-
-        return data["ouid"]
-
-    async def get_trade_history(self, ouid: str, tradetype: str):
-        url = f"{self.base_url}/fconline/v1/user/trade"
-
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                url,
-                headers=self.headers,
-                params={
-                    "ouid": ouid,
-                    "tradetype": tradetype,
-                    "offset": 0,
-                    "limit": 10,
-                },
-            )
-
-        if response.status_code != 200:
-            raise NexonAPIError(
-                f"NEXON API 오류: "
-                f"status={response.status_code}, "
-                f"body={response.text}"
+                f"NEXON API 오류 ({response.status_code}): {error_data}"
             )
 
         return response.json()
 
+    async def get_ouid(self, nickname: str) -> str:
+        data = await self._get(
+            "/fconline/v1/id",
+            params={
+                "nickname": nickname,
+            },
+        )
+
+        return data["ouid"]
+
+    async def get_trade_history(
+        self,
+        ouid: str,
+        trade_type: str,
+    ):
+        return await self._get(
+            "/fconline/v1/user/trade",
+            params={
+                "ouid": ouid,
+                "tradetype": trade_type,
+            },
+        )
+
+    async def get_spid_metadata(self):
+        return await self._get(
+            "/static/fconline/meta/spid.json"
+        )
+
+    async def get_season_metadata(self):
+        return await self._get(
+            "/static/fconline/meta/seasonid.json"
+        )
