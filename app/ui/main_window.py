@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+import traceback
 
 import httpx
 
@@ -318,14 +319,32 @@ class MainWindow(QMainWindow):
             QHeaderView.ResizeMode.Stretch,
         )
 
+        # -----------------------------------------------------
+        # 시즌 컬럼
+        # -----------------------------------------------------
+
         header.setSectionResizeMode(
             3,
-            QHeaderView.ResizeMode.ResizeToContents,
+            QHeaderView.ResizeMode.Fixed,
         )
+
+        self.trade_table.setColumnWidth(
+            3,
+            75,
+        )
+
+        # -----------------------------------------------------
+        # 강화 컬럼
+        # -----------------------------------------------------
 
         header.setSectionResizeMode(
             4,
-            QHeaderView.ResizeMode.ResizeToContents,
+            QHeaderView.ResizeMode.Fixed,
+        )
+
+        self.trade_table.setColumnWidth(
+            4,
+            85,
         )
 
         header.setSectionResizeMode(
@@ -556,9 +575,13 @@ class MainWindow(QMainWindow):
                 Qt.AlignmentFlag.AlignCenter
             )
 
-            season_label.setMinimumSize(
-                80,
-                45,
+            season_label.setFixedSize(
+                55,
+                32,
+            )
+
+            season_label.setScaledContents(
+                False
             )
 
             season_label.setToolTip(
@@ -581,6 +604,7 @@ class MainWindow(QMainWindow):
                     str(season_url),
                     season_label,
                 )
+
             else:
                 season_label.setText(
                     "-"
@@ -595,24 +619,39 @@ class MainWindow(QMainWindow):
             )
 
             if grade is None:
+                grade_level = 0
                 grade_text = "-"
+
             else:
-                grade_text = (
-                    f"+{grade}"
-                )
+                try:
+                    grade_level = int(
+                        str(grade)
+                        .replace("+", "")
+                        .strip()
+                    )
 
-            grade_item = QTableWidgetItem(
-                grade_text
+                except (
+                    TypeError,
+                    ValueError,
+                ):
+                    grade_level = 0
+
+                if 1 <= grade_level <= 13:
+                    grade_text = (
+                        f"+{grade_level}"
+                    )
+                else:
+                    grade_text = "-"
+
+            grade_widget = self._create_grade_widget(
+                grade_level,
+                grade_text,
             )
 
-            grade_item.setTextAlignment(
-                Qt.AlignmentFlag.AlignCenter
-            )
-
-            self.trade_table.setItem(
+            self.trade_table.setCellWidget(
                 row,
                 4,
-                grade_item,
+                grade_widget,
             )
 
             # -------------------------------------------------
@@ -641,6 +680,151 @@ class MainWindow(QMainWindow):
             )
 
         self.trade_table.resizeRowsToContents()
+
+    # =========================================================
+    # 강화 UI
+    # =========================================================
+
+    def _create_grade_widget(
+        self,
+        grade_level: int,
+        grade_text: str,
+    ) -> QWidget:
+        """
+        강화 표시 전용 위젯을 만든다.
+
+        숫자는 검정색으로 유지하고,
+        강화 단계에 따라 메탈 계열의
+        배경과 테두리를 적용한다.
+        """
+
+        # -----------------------------------------------------
+        # 바깥 컨테이너
+        # -----------------------------------------------------
+
+        container = QFrame()
+
+        container.setObjectName(
+            "gradeContainer"
+        )
+
+        container.setFixedSize(
+            64,
+            34,
+        )
+
+        container_layout = QHBoxLayout(
+            container
+        )
+
+        container_layout.setContentsMargins(
+            2,
+            2,
+            2,
+            2,
+        )
+
+        container_layout.setSpacing(
+            0
+        )
+
+        # -----------------------------------------------------
+        # 실제 강화 뱃지
+        # -----------------------------------------------------
+
+        badge = QLabel(
+            grade_text
+        )
+
+        badge.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )
+
+        badge.setFixedSize(
+            58,
+            28,
+        )
+
+        # -----------------------------------------------------
+        # 단계별 색상
+        # -----------------------------------------------------
+
+        if grade_level == 1:
+
+            background = "#34495E"
+            border = "#17212B"
+            inner = "#62778A"
+
+        elif 2 <= grade_level <= 4:
+
+            background = "#B87333"
+            border = "#663A1D"
+            inner = "#D59A67"
+
+        elif 5 <= grade_level <= 7:
+
+            background = "#BFC5CB"
+            border = "#737B83"
+            inner = "#F4F6F8"
+
+        elif 8 <= grade_level <= 10:
+
+            background = "#D6A72C"
+            border = "#775400"
+            inner = "#F6D96A"
+
+        elif 11 <= grade_level <= 13:
+
+            background = "#DCE6EE"
+            border = "#71899B"
+            inner = "#FFFFFF"
+
+        else:
+
+            background = "#E5E7EB"
+            border = "#9CA3AF"
+            inner = "#F8FAFC"
+
+        # -----------------------------------------------------
+        # 바깥 프레임
+        # -----------------------------------------------------
+
+        container.setStyleSheet(
+            f"""
+            QFrame#gradeContainer {{
+                background-color: {background};
+                border: 1px solid {border};
+                border-radius: 7px;
+            }}
+            """
+        )
+
+        # -----------------------------------------------------
+        # 내부 뱃지
+        # -----------------------------------------------------
+
+        badge.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: {background};
+                color: #111111;
+                border: 1px solid {inner};
+                border-radius: 5px;
+                padding: 0px;
+                margin: 0px;
+                font-size: 13px;
+                font-weight: 900;
+            }}
+            """
+        )
+
+        container_layout.addWidget(
+            badge,
+            0,
+            Qt.AlignmentFlag.AlignCenter,
+        )
+
+        return container
 
     # =========================================================
     # 시즌 이미지
@@ -698,8 +882,8 @@ class MainWindow(QMainWindow):
             return
 
         scaled = pixmap.scaled(
-            70,
-            40,
+            label.width(),
+            label.height(),
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
