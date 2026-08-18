@@ -47,7 +47,9 @@ class TradeService:
     # 메타데이터
     # =========================================================
 
-    def load_player_metadata(self) -> None:
+    def load_player_metadata(
+        self,
+    ) -> None:
         """선수 메타데이터를 불러온다."""
 
         players = (
@@ -80,7 +82,9 @@ class TradeService:
             ):
                 continue
 
-    def load_season_metadata(self) -> None:
+    def load_season_metadata(
+        self,
+    ) -> None:
         """시즌 메타데이터를 불러온다."""
 
         seasons = (
@@ -109,7 +113,9 @@ class TradeService:
             ):
                 continue
 
-    def load_metadata(self) -> None:
+    def load_metadata(
+        self,
+    ) -> None:
         """선수 + 시즌 메타데이터를 모두 불러온다."""
 
         if not self.player_map:
@@ -177,7 +183,10 @@ class TradeService:
         ):
             return default_result
 
+        # -----------------------------------------------------
         # SPID 앞자리에서 시즌 ID 추출
+        # -----------------------------------------------------
+
         season_id = (
             spid // 1_000_000
         )
@@ -195,10 +204,12 @@ class TradeService:
 
         return {
             "season_id": season_id,
+
             "season_name": season.get(
                 "className",
                 "알 수 없는 시즌",
             ),
+
             "season_img": season.get(
                 "seasonImg"
             ),
@@ -218,15 +229,19 @@ class TradeService:
         대응 형식:
 
         list
-            [0, 100, 200, ...]
+            [가격0, 가격1, 가격2, ...]
 
         문자열
-            "0|100|200|..."
+            "가격0|가격1|가격2|..."
 
         또는
 
-            "0,100,200,..."
+            "가격0,가격1,가격2,..."
         """
+
+        # -----------------------------------------------------
+        # list
+        # -----------------------------------------------------
 
         if isinstance(
             value,
@@ -249,6 +264,10 @@ class TradeService:
                     result.append(0)
 
             return result
+
+        # -----------------------------------------------------
+        # 문자열
+        # -----------------------------------------------------
 
         if isinstance(
             value,
@@ -306,8 +325,14 @@ class TradeService:
         if grade < 0:
             return None
 
+        if not isinstance(
+            result,
+            dict,
+        ):
+            return None
+
         # -----------------------------------------------------
-        # 일반적인 응답
+        # eachPrice
         # -----------------------------------------------------
 
         each_price = result.get(
@@ -320,52 +345,26 @@ class TradeService:
             )
         )
 
-        if prices:
-            if grade < len(
-                prices
-            ):
-                price = prices[
-                    grade
-                ]
-
-                if price > 0:
-                    return price
+        if not prices:
+            return None
 
         # -----------------------------------------------------
-        # 혹시 eachPrice가 다른 형태로 내려오는 경우
+        # 강화 단계 범위 확인
         # -----------------------------------------------------
 
-        for key in (
-            "each_price",
-            "EachPrice",
-            "eachPrices",
+        if grade >= len(
+            prices
         ):
-            value = result.get(
-                key
-            )
+            return None
 
-            prices = (
-                cls._parse_price_list(
-                    value
-                )
-            )
+        price = prices[
+            grade
+        ]
 
-            if not prices:
-                continue
+        if price <= 0:
+            return None
 
-            if grade >= len(
-                prices
-            ):
-                continue
-
-            price = prices[
-                grade
-            ]
-
-            if price > 0:
-                return price
-
-        return None
+        return price
 
     # =========================================================
     # 현재가
@@ -377,10 +376,21 @@ class TradeService:
         grade: int | None,
         n8_index: int | None = None,
     ) -> int | None:
+
+        print(
+            "[현재가 호출]",
+            "spid=",
+            spid,
+            "grade=",
+            grade,
+            "n8Index=",
+            n8_index,
+        )
         """
         데이터센터 기준 현재가를 조회한다.
 
-        거래 데이터에 들어있는 n8Index를 사용한다.
+        거래 데이터에 n8Index가 있으면
+        해당 n8Index로 데이터센터를 조회한다.
 
         동일한 선수/강화/n8Index는 캐시한다.
         """
@@ -389,10 +399,10 @@ class TradeService:
         # 기본값 확인
         # -----------------------------------------------------
 
-        if (
-            spid is None
-            or grade is None
-        ):
+        if spid is None:
+            return None
+
+        if grade is None:
             return None
 
         try:
@@ -472,20 +482,6 @@ class TradeService:
             return None
 
         # -----------------------------------------------------
-        # 응답 확인
-        # -----------------------------------------------------
-
-        if not isinstance(
-            result,
-            dict,
-        ):
-            self.price_cache[
-                cache_key
-            ] = None
-
-            return None
-
-        # -----------------------------------------------------
         # 현재가 추출
         # -----------------------------------------------------
 
@@ -506,10 +502,6 @@ class TradeService:
 
         return price
 
-    # =========================================================
-    # 현재가 캐시 초기화
-    # =========================================================
-
     def clear_price_cache(
         self,
     ) -> None:
@@ -528,9 +520,11 @@ class TradeService:
     ) -> dict[str, Any]:
         """NEXON 거래 데이터를 내부 형식으로 변환한다."""
 
-        # -----------------------------------------------------
-        # 선수
-        # -----------------------------------------------------
+        print(
+            "[거래 원본]",
+            trade,
+            flush=True,
+        )
 
         spid = trade.get(
             "spid"
@@ -562,7 +556,7 @@ class TradeService:
             grade = 0
 
         # -----------------------------------------------------
-        # 거래금액
+        # 거래 금액
         # -----------------------------------------------------
 
         value = trade.get(
@@ -581,17 +575,30 @@ class TradeService:
             value = 0
 
         # -----------------------------------------------------
+        # 구매가
+        # -----------------------------------------------------
+
+        buy_price = None
+
+        if trade_type == "구매":
+            buy_price = value
+
+        # -----------------------------------------------------
+        # 판매가
+        # -----------------------------------------------------
+
+        sell_price = None
+
+        if trade_type == "판매":
+            sell_price = value
+
+        # -----------------------------------------------------
         # n8Index
         # -----------------------------------------------------
 
         n8_index = trade.get(
             "n8Index"
         )
-
-        if n8_index is None:
-            n8_index = trade.get(
-                "n8_index"
-            )
 
         try:
             if n8_index is not None:
@@ -609,22 +616,8 @@ class TradeService:
             n8_index = None
 
         # -----------------------------------------------------
-        # 구매가
+        # 결과
         # -----------------------------------------------------
-
-        buy_price = None
-
-        if trade_type == "구매":
-            buy_price = value
-
-        # -----------------------------------------------------
-        # 판매가
-        # -----------------------------------------------------
-
-        sell_price = None
-
-        if trade_type == "판매":
-            sell_price = value
 
         return {
             # =================================================
@@ -688,7 +681,7 @@ class TradeService:
             "value": value,
 
             # =================================================
-            # 가격
+            # 가격 구조
             # =================================================
 
             "buy_price": buy_price,
@@ -699,7 +692,10 @@ class TradeService:
 
             "difference": None,
 
+            # =================================================
             # 구매 후 아직 판매되지 않은 거래
+            # =================================================
+
             "is_unsold": (
                 trade_type == "구매"
             ),
@@ -854,6 +850,19 @@ class TradeService:
             )
         )
 
+        print(
+            "[구매 API 원본 개수]",
+            len(trades),
+            flush=True,
+        )
+
+        if trades:
+            print(
+                "[구매 API 원본 첫번째]",
+                trades[0],
+                flush=True,
+            )
+
         normalized_trades = [
             self._normalize_trade(
                 trade,
@@ -890,6 +899,19 @@ class TradeService:
                 limit,
             )
         )
+
+        print(
+            "[판매 API 원본 개수]",
+            len(trades),
+            flush=True,
+        )
+
+        if trades:
+            print(
+                "[판매 API 원본 첫번째]",
+                trades[0],
+                flush=True,
+            )
 
         normalized_trades = [
             self._normalize_trade(
@@ -982,6 +1004,7 @@ class TradeService:
         # -----------------------------------------------------
 
         if value >= 1_000_000_000_000:
+
             jo = (
                 value
                 / 1_000_000_000_000
@@ -994,6 +1017,7 @@ class TradeService:
         # -----------------------------------------------------
 
         if value >= 100_000_000:
+
             eok = (
                 value
                 / 100_000_000
@@ -1038,6 +1062,7 @@ class TradeService:
             return "-"
 
         if difference > 0:
+
             text = (
                 "+"
                 + cls.format_price(
@@ -1046,6 +1071,7 @@ class TradeService:
             )
 
         elif difference < 0:
+
             text = (
                 "-"
                 + cls.format_price(

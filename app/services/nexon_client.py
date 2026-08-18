@@ -10,7 +10,7 @@ class NexonAPIError(Exception):
 
 
 class NexonClient:
-    """NEXON Open API 및 FC Online 데이터센터 클라이언트."""
+    """NEXON API 및 FC Online 데이터센터 클라이언트."""
 
     def __init__(
         self,
@@ -25,15 +25,21 @@ class NexonClient:
 
         self.api_key = api_key
 
+    # =========================================================
+    # 공통 헤더
+    # =========================================================
+
     @property
-    def headers(self) -> dict[str, str]:
+    def headers(
+        self,
+    ) -> dict[str, str]:
         return {
             "x-nxopen-api-key": self.api_key,
             "Accept": "application/json",
         }
 
     # =========================================================
-    # 공통 HTTP 요청
+    # NEXON Open API 공통 요청
     # =========================================================
 
     def request(
@@ -79,7 +85,12 @@ class NexonClient:
                 f"{error}"
             ) from error
 
+        # -----------------------------------------------------
+        # 정상 응답
+        # -----------------------------------------------------
+
         if 200 <= response.status_code < 300:
+
             if not response.content:
                 return None
 
@@ -92,6 +103,10 @@ class NexonClient:
                     f"응답: {response.text}"
                 ) from error
 
+        # -----------------------------------------------------
+        # 오류 응답
+        # -----------------------------------------------------
+
         try:
             error_body = response.json()
 
@@ -101,7 +116,7 @@ class NexonClient:
         if response.status_code == 400:
             raise NexonAPIError(
                 "NEXON API 요청이 잘못되었습니다.\n\n"
-                "HTTP 상태 코드: 400\n"
+                f"HTTP 상태 코드: 400\n"
                 f"서버 응답: {error_body}"
             )
 
@@ -393,104 +408,183 @@ class NexonClient:
         return result
 
     # =========================================================
-    # FC Online 공식 데이터센터
-    # =========================================================
+# FC Online 공식 데이터센터
+# =========================================================
 
-    def get_squad_info(
-        self,
-        n8_index: int,
-    ) -> dict[str, Any]:
-        """
-        FC Online 공식 데이터센터에서 선수 카드 정보를 조회한다.
+def get_squad_info(
+    self,
+    n8_index: int,
+) -> dict[str, Any]:
+    """
+    FC Online 공식 데이터센터에서 선수 카드 정보를 조회한다.
 
-        데이터센터의 eachPrice를 이용하여
-        강화 단계별 현재가를 확인할 때 사용한다.
-        """
+    n8Index를 기준으로 해당 선수 카드의
+    강화 단계별 가격 정보를 반환한다.
+    """
 
-        try:
-            n8_index = int(
-                n8_index
-            )
+    # -----------------------------------------------------
+    # n8Index 검증
+    # -----------------------------------------------------
 
-        except (
-            TypeError,
-            ValueError,
-        ) as error:
-            raise ValueError(
-                "n8Index가 올바르지 않습니다."
-            ) from error
-
-        if n8_index <= 0:
-            raise ValueError(
-                "n8Index는 0보다 커야 합니다."
-            )
-
-        url = (
-            "https://m.fconline.nexon.com"
-            "/DataCenter/SquadGetInfo"
+    try:
+        n8_index = int(
+            n8_index
         )
 
-        headers = {
-            "Accept": "application/json",
-            "User-Agent": (
-                "Mozilla/5.0 "
-                "(Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 "
-                "(KHTML, like Gecko) "
-                "Chrome/151.0.0.0 "
-                "Safari/537.36"
-            ),
-        }
+    except (
+        TypeError,
+        ValueError,
+    ) as error:
+        raise ValueError(
+            "n8Index가 올바르지 않습니다."
+        ) from error
+
+    if n8_index <= 0:
+        raise ValueError(
+            "n8Index는 0보다 커야 합니다."
+        )
+
+    # -----------------------------------------------------
+    # URL
+    # -----------------------------------------------------
+
+    url = (
+        "https://m.fconline.nexon.com"
+        "/DataCenter/SquadGetInfo"
+    )
+
+    # -----------------------------------------------------
+    # Header
+    # -----------------------------------------------------
+
+    headers = {
+        "Accept": (
+            "application/json,"
+            " text/javascript,"
+            " */*; q=0.01"
+        ),
+
+        "Accept-Language": (
+            "ko-KR,"
+            "ko;q=0.9,"
+            "en-US;q=0.8,"
+            "en;q=0.7"
+        ),
+
+        "Referer": (
+            "https://m.fconline.nexon.com/"
+        ),
+
+        "User-Agent": (
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/151.0.0.0 "
+            "Safari/537.36"
+        ),
+
+        "X-Requested-With": (
+            "XMLHttpRequest"
+        ),
+    }
+
+    # -----------------------------------------------------
+    # 요청
+    # -----------------------------------------------------
+
+    try:
+        response = httpx.get(
+            url,
+            params={
+                "n8Index": n8_index,
+            },
+            headers=headers,
+            timeout=settings.REQUEST_TIMEOUT,
+        )
+
+    except httpx.TimeoutException as error:
+        raise NexonAPIError(
+            "FC Online 데이터센터 요청 시간이 초과되었습니다."
+        ) from error
+
+    except httpx.RequestError as error:
+        raise NexonAPIError(
+            "FC Online 데이터센터 서버에 연결할 수 없습니다.\n"
+            f"{error}"
+        ) from error
+
+    # -----------------------------------------------------
+    # HTTP 상태 확인
+    # -----------------------------------------------------
+
+    if not 200 <= response.status_code < 300:
 
         try:
-            response = httpx.get(
-                url,
-                params={
-                    "n8Index": n8_index,
-                },
-                headers=headers,
-                timeout=settings.REQUEST_TIMEOUT,
-            )
+            error_body = response.json()
 
-        except httpx.TimeoutException as error:
-            raise NexonAPIError(
-                "FC Online 데이터센터 요청 시간이 초과되었습니다."
-            ) from error
+        except ValueError:
+            error_body = response.text.strip()
 
-        except httpx.RequestError as error:
-            raise NexonAPIError(
-                "FC Online 데이터센터 서버에 연결할 수 없습니다.\n"
-                f"{error}"
-            ) from error
+        raise NexonAPIError(
+            "FC Online 데이터센터 요청에 실패했습니다.\n\n"
+            f"HTTP 상태 코드: {response.status_code}\n"
+            f"서버 응답: {error_body}"
+        )
 
-        if not 200 <= response.status_code < 300:
-            try:
-                error_body = response.json()
+    # -----------------------------------------------------
+    # JSON 변환
+    # -----------------------------------------------------
 
-            except ValueError:
-                error_body = response.text.strip()
+    try:
+        result = response.json()
 
-            raise NexonAPIError(
-                "FC Online 데이터센터 요청에 실패했습니다.\n\n"
-                f"HTTP 상태 코드: {response.status_code}\n"
-                f"서버 응답: {error_body}"
-            )
+    except ValueError as error:
+        raise NexonAPIError(
+            "FC Online 데이터센터 응답을 JSON으로 읽을 수 없습니다.\n"
+            f"응답: {response.text[:500]}"
+        ) from error
 
-        try:
-            result = response.json()
+    # -----------------------------------------------------
+    # 응답 형식 확인
+    # -----------------------------------------------------
 
-        except ValueError as error:
-            raise NexonAPIError(
-                "FC Online 데이터센터 응답을 JSON으로 읽을 수 없습니다.\n"
-                f"응답: {response.text[:500]}"
-            ) from error
+    if not isinstance(
+        result,
+        dict,
+    ):
+        raise NexonAPIError(
+            "FC Online 데이터센터 응답 형식이 올바르지 않습니다."
+        )
 
-        if not isinstance(
-            result,
-            dict,
-        ):
-            raise NexonAPIError(
-                "FC Online 데이터센터 응답 형식이 올바르지 않습니다."
-            )
+    # -----------------------------------------------------
+    # 디버깅
+    #
+    # 현재가가 안 뜨는 원인을 확인하기 위해
+    # 실제 응답의 최상위 구조를 출력한다.
+    # -----------------------------------------------------
 
-        return result
+    print(
+        "\n[데이터센터] "
+        f"n8Index={n8_index}"
+    )
+
+    print(
+        "[데이터센터] 응답 keys:",
+        list(
+            result.keys()
+        )
+    )
+
+    print(
+        "[데이터센터] eachPrice:",
+        result.get(
+            "eachPrice"
+        )
+    )
+
+    # -----------------------------------------------------
+    # 전체 응답 반환
+    # -----------------------------------------------------
+
+    return result
