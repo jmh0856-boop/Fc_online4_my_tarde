@@ -1,65 +1,21 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+import sys
 
-from app.routes import trade
-from app.routes import user
+from PySide6.QtWidgets import QApplication
+
+from app.ui.login_window import LoginWindow
 
 
-app = FastAPI(
-    title="FC Online Trade API",
-    version="0.1.0",
-)
+def main() -> int:
+    app = QApplication(sys.argv)
+
+    app.setApplicationName("FC Online Personal Tool")
+    app.setOrganizationName("jmh0856")
+
+    login_window = LoginWindow()
+    login_window.show()
+
+    return app.exec()
 
 
-app.mount(
-    "/static",
-    StaticFiles(directory="app/static"),
-    name="static",
-)
-
-
-templates = Jinja2Templates(
-    directory="app/templates",
-)
-
-
-app.include_router(user.router)
-app.include_router(trade.router)
-
-
-class ApiKeyRequest(BaseModel):
-    api_key: str
-
-
-@app.get("/")
-async def root(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-    )
-
-
-@app.post("/api-key")
-async def set_api_key(data: ApiKeyRequest):
-
-    api_key = data.api_key.strip()
-
-    if not api_key:
-        raise HTTPException(
-            status_code=400,
-            detail="API Key를 입력해주세요.",
-        )
-
-    return {
-        "success": True,
-        "message": "API Key가 입력되었습니다.",
-    }
-
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "ok"
-    }
+if __name__ == "__main__":
+    raise SystemExit(main())
