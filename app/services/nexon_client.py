@@ -8,11 +8,15 @@ class NexonAPIError(Exception):
 
 
 class NexonClient:
-    BASE_URL = "https://open.api.nexon.com"
 
-    def __init__(self):
+    BASE_URL = settings.nexon_base_url
+
+    def __init__(self, api_key: str | None = None):
+
+        self.api_key = api_key or settings.nexon_api_key
+
         self.headers = {
-            "x-nxopen-api-key": settings.nexon_api_key,
+            "x-nxopen-api-key": self.api_key,
         }
 
     async def _get(
@@ -20,19 +24,27 @@ class NexonClient:
         path: str,
         params: dict | None = None,
     ):
+        if not self.api_key:
+            raise NexonAPIError(
+                "NEXON API Key가 입력되지 않았습니다."
+            )
+
         async with httpx.AsyncClient(
             base_url=self.BASE_URL,
             headers=self.headers,
             timeout=10.0,
         ) as client:
+
             response = await client.get(
                 path,
                 params=params,
             )
 
         if response.status_code != 200:
+
             try:
                 error_data = response.json()
+
             except Exception:
                 error_data = response.text
 
@@ -42,7 +54,11 @@ class NexonClient:
 
         return response.json()
 
-    async def get_ouid(self, nickname: str) -> str:
+    async def get_ouid(
+        self,
+        nickname: str,
+    ) -> str:
+
         data = await self._get(
             "/fconline/v1/id",
             params={
@@ -56,21 +72,28 @@ class NexonClient:
         self,
         ouid: str,
         trade_type: str,
+        offset: int,
+        limit: int,
     ):
+
         return await self._get(
             "/fconline/v1/user/trade",
             params={
                 "ouid": ouid,
                 "tradetype": trade_type,
+                "offset": offset,
+                "limit": limit,
             },
         )
 
     async def get_spid_metadata(self):
+
         return await self._get(
             "/static/fconline/meta/spid.json"
         )
 
     async def get_season_metadata(self):
+
         return await self._get(
             "/static/fconline/meta/seasonid.json"
         )
