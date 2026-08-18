@@ -10,9 +10,12 @@ class NexonAPIError(Exception):
 
 
 class NexonClient:
-    """NEXON Open API 클라이언트."""
+    """NEXON Open API 및 FC Online 데이터센터 클라이언트."""
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(
+        self,
+        api_key: str,
+    ) -> None:
         api_key = api_key.strip()
 
         if not api_key:
@@ -29,6 +32,10 @@ class NexonClient:
             "Accept": "application/json",
         }
 
+    # =========================================================
+    # 공통 HTTP 요청
+    # =========================================================
+
     def request(
         self,
         method: str,
@@ -42,7 +49,10 @@ class NexonClient:
             f"/{endpoint.lstrip('/')}"
         )
 
-        headers = kwargs.pop("headers", {})
+        headers = kwargs.pop(
+            "headers",
+            {},
+        )
 
         request_headers = {
             **self.headers,
@@ -69,7 +79,6 @@ class NexonClient:
                 f"{error}"
             ) from error
 
-        # 정상 응답
         if 200 <= response.status_code < 300:
             if not response.content:
                 return None
@@ -83,18 +92,16 @@ class NexonClient:
                     f"응답: {response.text}"
                 ) from error
 
-        # 서버 응답 원문 확보
         try:
             error_body = response.json()
 
         except ValueError:
             error_body = response.text.strip()
 
-        # HTTP 상태별 메시지
         if response.status_code == 400:
             raise NexonAPIError(
                 "NEXON API 요청이 잘못되었습니다.\n\n"
-                f"HTTP 상태 코드: 400\n"
+                "HTTP 상태 코드: 400\n"
                 f"서버 응답: {error_body}"
             )
 
@@ -128,6 +135,10 @@ class NexonClient:
             f"서버 응답: {error_body}"
         )
 
+    # =========================================================
+    # OUID
+    # =========================================================
+
     def get_ouid(
         self,
         nickname: str,
@@ -149,12 +160,17 @@ class NexonClient:
             },
         )
 
-        if not isinstance(result, dict):
+        if not isinstance(
+            result,
+            dict,
+        ):
             raise NexonAPIError(
                 "OUID 조회 응답 형식이 올바르지 않습니다."
             )
 
-        ouid = result.get("ouid")
+        ouid = result.get(
+            "ouid"
+        )
 
         if not ouid:
             raise NexonAPIError(
@@ -162,6 +178,10 @@ class NexonClient:
             )
 
         return ouid
+
+    # =========================================================
+    # 유저 정보
+    # =========================================================
 
     def get_user_info(
         self,
@@ -184,12 +204,19 @@ class NexonClient:
             },
         )
 
-        if not isinstance(result, dict):
+        if not isinstance(
+            result,
+            dict,
+        ):
             raise NexonAPIError(
                 "유저 정보 응답 형식이 올바르지 않습니다."
             )
 
         return result
+
+    # =========================================================
+    # 거래 내역
+    # =========================================================
 
     def get_trade_history(
         self,
@@ -201,7 +228,10 @@ class NexonClient:
 
         trade_type = trade_type.strip().lower()
 
-        if trade_type not in {"buy", "sell"}:
+        if trade_type not in {
+            "buy",
+            "sell",
+        }:
             raise ValueError(
                 "거래 유형은 buy 또는 sell이어야 합니다."
             )
@@ -226,12 +256,19 @@ class NexonClient:
             },
         )
 
-        if not isinstance(result, list):
+        if not isinstance(
+            result,
+            list,
+        ):
             raise NexonAPIError(
                 "거래 기록 응답 형식이 올바르지 않습니다."
             )
 
         return result
+
+    # =========================================================
+    # 선수 메타데이터
+    # =========================================================
 
     def get_player_metadata(
         self,
@@ -282,12 +319,19 @@ class NexonClient:
                 "선수 메타데이터를 JSON으로 읽을 수 없습니다."
             ) from error
 
-        if not isinstance(result, list):
+        if not isinstance(
+            result,
+            list,
+        ):
             raise NexonAPIError(
                 "선수 메타데이터 응답 형식이 올바르지 않습니다."
             )
 
         return result
+
+    # =========================================================
+    # 시즌 메타데이터
+    # =========================================================
 
     def get_season_metadata(
         self,
@@ -338,9 +382,115 @@ class NexonClient:
                 "시즌 메타데이터를 JSON으로 읽을 수 없습니다."
             ) from error
 
-        if not isinstance(result, list):
+        if not isinstance(
+            result,
+            list,
+        ):
             raise NexonAPIError(
                 "시즌 메타데이터 응답 형식이 올바르지 않습니다."
+            )
+
+        return result
+
+    # =========================================================
+    # FC Online 공식 데이터센터
+    # =========================================================
+
+    def get_squad_info(
+        self,
+        n8_index: int,
+    ) -> dict[str, Any]:
+        """
+        FC Online 공식 데이터센터에서 선수 카드 정보를 조회한다.
+
+        데이터센터의 eachPrice를 이용하여
+        강화 단계별 현재가를 확인할 때 사용한다.
+        """
+
+        try:
+            n8_index = int(
+                n8_index
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ) as error:
+            raise ValueError(
+                "n8Index가 올바르지 않습니다."
+            ) from error
+
+        if n8_index <= 0:
+            raise ValueError(
+                "n8Index는 0보다 커야 합니다."
+            )
+
+        url = (
+            "https://m.fconline.nexon.com"
+            "/DataCenter/SquadGetInfo"
+        )
+
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": (
+                "Mozilla/5.0 "
+                "(Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 "
+                "(KHTML, like Gecko) "
+                "Chrome/151.0.0.0 "
+                "Safari/537.36"
+            ),
+        }
+
+        try:
+            response = httpx.get(
+                url,
+                params={
+                    "n8Index": n8_index,
+                },
+                headers=headers,
+                timeout=settings.REQUEST_TIMEOUT,
+            )
+
+        except httpx.TimeoutException as error:
+            raise NexonAPIError(
+                "FC Online 데이터센터 요청 시간이 초과되었습니다."
+            ) from error
+
+        except httpx.RequestError as error:
+            raise NexonAPIError(
+                "FC Online 데이터센터 서버에 연결할 수 없습니다.\n"
+                f"{error}"
+            ) from error
+
+        if not 200 <= response.status_code < 300:
+            try:
+                error_body = response.json()
+
+            except ValueError:
+                error_body = response.text.strip()
+
+            raise NexonAPIError(
+                "FC Online 데이터센터 요청에 실패했습니다.\n\n"
+                f"HTTP 상태 코드: {response.status_code}\n"
+                f"서버 응답: {error_body}"
+            )
+
+        try:
+            result = response.json()
+
+        except ValueError as error:
+            raise NexonAPIError(
+                "FC Online 데이터센터 응답을 JSON으로 읽을 수 없습니다.\n"
+                f"응답: {response.text[:500]}"
+            ) from error
+
+        if not isinstance(
+            result,
+            dict,
+        ):
+            raise NexonAPIError(
+                "FC Online 데이터센터 응답 형식이 올바르지 않습니다."
             )
 
         return result
