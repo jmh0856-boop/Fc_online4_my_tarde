@@ -1,7 +1,14 @@
+from enum import Enum
+
 from fastapi import APIRouter, Depends, Query
 
 from app.services.nexon_client import NexonClient
 from app.services.trade_service import TradeService
+
+
+class TradeType(str, Enum):
+    BUY = "buy"
+    SELL = "sell"
 
 
 router = APIRouter(
@@ -19,13 +26,13 @@ def get_trade_service() -> TradeService:
 @router.get("/{ouid}")
 async def get_trades(
     ouid: str,
-    tradetype: str = Query(
-        default="buy",
+    tradetype: TradeType = Query(
+        default=TradeType.BUY,
         description="거래 유형: buy 또는 sell",
     ),
     service: TradeService = Depends(get_trade_service),
 ):
     return await service.get_trades(
         ouid,
-        tradetype,
+        tradetype.value,
     )
