@@ -596,3 +596,235 @@ body {
         font-size: 16px;
     }
 }
+
+
+/* =========================
+   API Key
+========================= */
+
+.api-key-box {
+    margin-bottom: 20px;
+
+    padding: 16px;
+
+    background: white;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+}
+
+.api-key-box label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #555;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.api-key-input {
+    display: flex;
+
+    gap: 10px;
+}
+
+.api-key-input input {
+    flex: 1;
+
+    height: 42px;
+
+    padding: 0 12px;
+
+    border: 1px solid #ddd;
+    border-radius: 7px;
+
+    background: white;
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+.api-key-input input:focus {
+    border-color: #999;
+}
+
+#api-key-save-button {
+    width: 80px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #222;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+#api-key-save-button:hover {
+    opacity: 0.85;
+}
+
+.api-key-help {
+    margin: 8px 0 0;
+
+    color: #999;
+
+    font-size: 12px;
+}
+
+
+/* =========================
+   NEXON API Key
+========================= */
+
+.api-key-box {
+    margin-bottom: 20px;
+
+    padding: 18px;
+
+    background: white;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+
+.api-key-title {
+    margin-bottom: 6px;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+
+.api-key-description {
+    margin-bottom: 12px;
+
+    color: #888;
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+.api-key-input-row {
+    display: flex;
+
+    gap: 8px;
+}
+
+
+#api-key {
+    flex: 1;
+
+    min-width: 0;
+
+    height: 42px;
+
+    padding: 0 12px;
+
+    border: 1px solid #ddd;
+    border-radius: 7px;
+
+    background: white;
+
+    color: #222;
+
+    font-size: 14px;
+
+    outline: none;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+
+#api-key:focus {
+    border-color: #999;
+
+    box-shadow:
+        0 0 0 3px rgba(0, 0, 0, 0.04);
+}
+
+
+#api-key-save-button {
+    flex-shrink: 0;
+
+    height: 42px;
+
+    padding: 0 18px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #222;
+
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.15s ease;
+}
+
+
+#api-key-save-button:hover {
+    opacity: 0.85;
+}
+
+
+.api-key-status {
+    margin-top: 8px;
+
+    min-height: 18px;
+
+    color: #d33;
+
+    font-size: 12px;
+}
+
+
+.api-key-status.success {
+    color: #168a45;
+}
+
+
+/* =========================
+   API Key 모바일
+========================= */
+
+@media (max-width: 600px) {
+
+    .api-key-box {
+        padding: 14px;
+    }
+
+
+    .api-key-input-row {
+        flex-direction: column;
+    }
+
+
+    #api-key {
+        width: 100%;
+    }
+
+
+    #api-key-save-button {
+        width: 100%;
+    }
+
+}

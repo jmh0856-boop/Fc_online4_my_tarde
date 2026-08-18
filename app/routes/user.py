@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 
 from app.schemas.user import UserResponse
 from app.services.nexon_client import NexonAPIError, NexonClient
@@ -11,18 +11,20 @@ router = APIRouter(
 )
 
 
-def get_user_service() -> UserService:
-    return UserService(
-        nexon_client=NexonClient()
-    )
-
-
 @router.get("/{nickname}", response_model=UserResponse)
 async def get_user(
     nickname: str,
-    service: UserService = Depends(get_user_service),
+    x_nexon_api_key: str = Header(...),
 ):
     try:
+        nexon_client = NexonClient(
+            api_key=x_nexon_api_key
+        )
+
+        service = UserService(
+            nexon_client=nexon_client
+        )
+
         ouid = await service.find_ouid(nickname)
 
         return UserResponse(

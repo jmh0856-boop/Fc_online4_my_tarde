@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
 from app.routes import trade
 from app.routes import user
@@ -12,7 +13,6 @@ app = FastAPI(
 )
 
 
-# 정적 파일
 app.mount(
     "/static",
     StaticFiles(directory="app/static"),
@@ -20,15 +20,17 @@ app.mount(
 )
 
 
-# 템플릿
 templates = Jinja2Templates(
     directory="app/templates",
 )
 
 
-# API 라우터
 app.include_router(user.router)
 app.include_router(trade.router)
+
+
+class ApiKeyRequest(BaseModel):
+    api_key: str
 
 
 @app.get("/")
@@ -37,6 +39,23 @@ async def root(request: Request):
         request=request,
         name="index.html",
     )
+
+
+@app.post("/api-key")
+async def set_api_key(data: ApiKeyRequest):
+
+    api_key = data.api_key.strip()
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="API Key를 입력해주세요.",
+        )
+
+    return {
+        "success": True,
+        "message": "API Key가 입력되었습니다.",
+    }
 
 
 @app.get("/health")

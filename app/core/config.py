@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    nexon_api_key: str = ""
+
     nexon_base_url: str = "https://open.api.nexon.com"
 
     model_config = SettingsConfigDict(

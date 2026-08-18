@@ -1,4 +1,6 @@
-﻿from app.services.nexon_client import NexonClient
+﻿from datetime import datetime, timedelta
+
+from app.services.nexon_client import NexonClient
 from app.services.player_service import PlayerService
 
 
@@ -16,18 +18,37 @@ class TradeService:
         self,
         ouid: str,
         trade_type: str,
-        page: int,
-        size: int,
+        page: int = 1,
+        size: int = 20,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ):
+
+        # ==========================================
+        # 페이지 계산
+        # ==========================================
+
+        offset = (page - 1) * size
+        limit = size
+
+        # ==========================================
+        # 거래내역 조회
+        # ==========================================
+
         if trade_type == "all":
+
             buy_trades = await self.nexon_client.get_trade_history(
                 ouid=ouid,
                 trade_type="buy",
+                offset=offset,
+                limit=limit,
             )
 
             sell_trades = await self.nexon_client.get_trade_history(
                 ouid=ouid,
                 trade_type="sell",
+                offset=offset,
+                limit=limit,
             )
 
             trades = [
@@ -47,9 +68,12 @@ class TradeService:
             ]
 
         else:
+
             raw_trades = await self.nexon_client.get_trade_history(
                 ouid=ouid,
                 trade_type=trade_type,
+                offset=offset,
+                limit=limit,
             )
 
             trades = [
@@ -60,9 +84,56 @@ class TradeService:
                 for trade in raw_trades
             ]
 
+        # ==========================================
+        # 날짜 필터
+        # ==========================================
+
+        if start_date:
+
+            start_datetime = datetime.fromisoformat(
+                start_date
+            )
+
+            trades = [
+                trade
+                for trade in trades
+                if datetime.fromisoformat(
+                    trade["tradeDate"]
+                ) >= start_datetime
+            ]
+
+        if end_date:
+
+            end_datetime = (
+                datetime.fromisoformat(end_date)
+                + timedelta(days=1)
+            )
+
+            trades = [
+                trade
+                for trade in trades
+                if datetime.fromisoformat(
+                    trade["tradeDate"]
+                ) < end_datetime
+            ]
+
+        # ==========================================
+        # 최신순 정렬
+        # ==========================================
+
+        trades.sort(
+            key=lambda x: x["tradeDate"],
+            reverse=True,
+        )
+
+        # ==========================================
+        # 선수 정보 추가
+        # ==========================================
+
         result = []
 
         for trade in trades:
+
             player_info = await self.player_service.get_player_info(
                 trade["spid"]
             )
@@ -86,19 +157,19 @@ class TradeService:
                 }
             )
 
-        # 최신순
-        result.sort(
-            key=lambda x: x["trade_date"],
-            reverse=True,
-        )
+        # ==========================================
+        # 결과 페이지네이션
+        # ==========================================
 
         total = len(result)
 
         start = (page - 1) * size
         end = start + size
 
+        items = result[start:end]
+
         return {
-            "items": result[start:end],
+            "items": items,
             "page": page,
             "size": size,
             "total": total,

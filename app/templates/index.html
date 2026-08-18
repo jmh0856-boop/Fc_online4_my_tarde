@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>FC Online 거래내역</title>
 
@@ -16,13 +20,67 @@
 
     <main class="container">
 
+        <!-- =========================
+             헤더
+        ========================== -->
+
         <header class="page-header">
-            <h1>FC Online 거래내역</h1>
-            <p>구매 / 판매 거래내역을 확인하세요.</p>
+
+            <h1>
+                FC Online 거래내역
+            </h1>
+
+            <p>
+                구매 / 판매 거래내역을 확인하세요.
+            </p>
+
         </header>
 
 
-        <!-- 닉네임 검색 -->
+        <!-- =========================
+             API Key
+        ========================== -->
+
+        <section class="api-key-box">
+
+            <div class="api-key-title">
+                NEXON Open API Key
+            </div>
+
+            <div class="api-key-description">
+                본인의 NEXON Open API Key를 입력해주세요.
+            </div>
+
+            <div class="api-key-input-row">
+
+                <input
+                    type="password"
+                    id="api-key"
+                    placeholder="NEXON Open API Key를 입력하세요"
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    id="save-api-key-button"
+                >
+                    저장
+                </button>
+
+            </div>
+
+            <div
+                id="api-key-status"
+                class="api-key-status"
+            ></div>
+
+        </section>
+
+
+        <!-- =========================
+             닉네임 검색
+        ========================== -->
+
         <section class="search-box">
 
             <input
@@ -31,17 +89,24 @@
                 placeholder="FC Online 닉네임을 입력하세요"
             >
 
-            <button id="search-button">
+            <button
+                type="button"
+                id="search-button"
+            >
                 조회
             </button>
 
         </section>
 
 
-        <!-- 거래 종류 -->
-        <nav class="trade-tabs">
+        <!-- =========================
+             거래 종류
+        ========================== -->
+
+        <div class="trade-tabs">
 
             <button
+                type="button"
                 class="trade-tab active"
                 data-type="all"
             >
@@ -49,6 +114,7 @@
             </button>
 
             <button
+                type="button"
                 class="trade-tab"
                 data-type="buy"
             >
@@ -56,24 +122,83 @@
             </button>
 
             <button
+                type="button"
                 class="trade-tab"
                 data-type="sell"
             >
                 판매
             </button>
 
-        </nav>
+        </div>
 
 
-        <!-- 상태 -->
+        <!-- =========================
+             기간 검색
+        ========================== -->
+
+        <div class="date-filter">
+
+            <div class="date-field">
+
+                <label for="start-date">
+                    시작일
+                </label>
+
+                <input
+                    type="date"
+                    id="start-date"
+                >
+
+            </div>
+
+
+            <div class="date-separator">
+                ~
+            </div>
+
+
+            <div class="date-field">
+
+                <label for="end-date">
+                    종료일
+                </label>
+
+                <input
+                    type="date"
+                    id="end-date"
+                >
+
+            </div>
+
+
+            <button
+                type="button"
+                id="date-search-button"
+            >
+                기간 조회
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             상태
+        ========================== -->
+
         <div id="status"></div>
 
 
-        <!-- 거래 목록 -->
+        <!-- =========================
+             거래 목록
+        ========================== -->
+
         <section id="trade-list"></section>
 
 
-        <!-- 페이지네이션 -->
+        <!-- =========================
+             페이지네이션
+        ========================== -->
+
         <nav
             id="pagination"
             class="pagination"
@@ -87,4 +212,5 @@
     ></script>
 
 </body>
+
 </html>

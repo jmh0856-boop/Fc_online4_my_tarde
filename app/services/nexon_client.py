@@ -1,7 +1,5 @@
 import httpx
 
-from app.core.config import settings
-
 
 class NexonAPIError(Exception):
     """NEXON Open API 호출 중 발생한 오류"""
@@ -9,14 +7,13 @@ class NexonAPIError(Exception):
 
 class NexonClient:
 
-    BASE_URL = settings.nexon_base_url
+    BASE_URL = "https://open.api.nexon.com"
 
-    def __init__(self, api_key: str | None = None):
-
-        self.api_key = api_key or settings.nexon_api_key
+    def __init__(self, api_key: str):
+        self.api_key = api_key
 
         self.headers = {
-            "x-nxopen-api-key": self.api_key,
+            "x-nxopen-api-key": api_key,
         }
 
     async def _get(
@@ -24,11 +21,6 @@ class NexonClient:
         path: str,
         params: dict | None = None,
     ):
-        if not self.api_key:
-            raise NexonAPIError(
-                "NEXON API Key가 입력되지 않았습니다."
-            )
-
         async with httpx.AsyncClient(
             base_url=self.BASE_URL,
             headers=self.headers,
@@ -76,7 +68,7 @@ class NexonClient:
         limit: int,
     ):
 
-        return await self._get(
+        data = await self._get(
             "/fconline/v1/user/trade",
             params={
                 "ouid": ouid,
@@ -85,6 +77,8 @@ class NexonClient:
                 "limit": limit,
             },
         )
+
+        return data
 
     async def get_spid_metadata(self):
 

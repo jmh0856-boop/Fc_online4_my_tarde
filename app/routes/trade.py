@@ -1,9 +1,9 @@
 from enum import Enum
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from app.schemas.trade import TradeList
-from app.services.nexon_client import NexonClient
+from app.services.nexon_client import NexonAPIError, NexonClient
 from app.services.player_service import PlayerService
 from app.services.trade_service import TradeService
 
@@ -20,9 +20,16 @@ router = APIRouter(
 )
 
 
-def get_trade_service() -> TradeService:
-    nexon_client = NexonClient()
-    player_service = PlayerService(nexon_client)
+def get_trade_service(
+    x_nexon_api_key: str = Header(...),
+) -> TradeService:
+    nexon_client = NexonClient(
+        api_key=x_nexon_api_key
+    )
+
+    player_service = PlayerService(
+        nexon_client
+    )
 
     return TradeService(
         nexon_client=nexon_client,
@@ -48,11 +55,28 @@ async def get_trades(
         le=100,
         description="페이지 크기",
     ),
+    start_date: str | None = Query(
+        default=None,
+        description="조회 시작일",
+    ),
+    end_date: str | None = Query(
+        default=None,
+        description="조회 종료일",
+    ),
     service: TradeService = Depends(get_trade_service),
 ):
-    return await service.get_trades(
-        ouid,
-        tradetype.value,
-        page,
-        size,
-    )
+    try:
+        return await service.get_trades(
+            ouid=ouid,
+            trade_type=tradetype.value,
+            page=page,
+            size=size,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+    except NexonAPIError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=str(e),
+        )
