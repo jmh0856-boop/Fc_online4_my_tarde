@@ -69,3 +69,8 @@ class NexonClient:
         return await self._get(
             "/static/fconline/meta/spid.json"
         )
+
+    async def get_season_metadata(self):
+        return await self._get(
+            "/static/fconline/meta/seasonid.json"
+        )
