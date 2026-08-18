@@ -16,8 +16,8 @@ class TradeService:
         self,
         ouid: str,
         trade_type: str,
-        page: int = 1,
-        size: int = 20,
+        page: int,
+        size: int,
     ):
         if trade_type == "all":
             buy_trades = await self.nexon_client.get_trade_history(
@@ -31,25 +31,33 @@ class TradeService:
             )
 
             trades = [
-                *[
-                    {**trade, "trade_type": "buy"}
-                    for trade in buy_trades
-                ],
-                *[
-                    {**trade, "trade_type": "sell"}
-                    for trade in sell_trades
-                ],
+                {
+                    **trade,
+                    "trade_type": "buy",
+                }
+                for trade in buy_trades
+            ]
+
+            trades += [
+                {
+                    **trade,
+                    "trade_type": "sell",
+                }
+                for trade in sell_trades
             ]
 
         else:
-            trades = await self.nexon_client.get_trade_history(
+            raw_trades = await self.nexon_client.get_trade_history(
                 ouid=ouid,
                 trade_type=trade_type,
             )
 
             trades = [
-                {**trade, "trade_type": trade_type}
-                for trade in trades
+                {
+                    **trade,
+                    "trade_type": trade_type,
+                }
+                for trade in raw_trades
             ]
 
         result = []
@@ -58,6 +66,9 @@ class TradeService:
             player_info = await self.player_service.get_player_info(
                 trade["spid"]
             )
+
+            if player_info is None:
+                continue
 
             result.append(
                 {
@@ -69,13 +80,15 @@ class TradeService:
                     "season_id": player_info["season_id"],
                     "season_name": player_info["season_name"],
                     "season_img": player_info["season_img"],
+                    "player_img": player_info["player_img"],
                     "grade": trade["grade"],
                     "value": trade["value"],
                 }
             )
 
+        # 최신순
         result.sort(
-            key=lambda trade: trade["trade_date"],
+            key=lambda x: x["trade_date"],
             reverse=True,
         )
 
@@ -84,10 +97,8 @@ class TradeService:
         start = (page - 1) * size
         end = start + size
 
-        items = result[start:end]
-
         return {
-            "items": items,
+            "items": result[start:end],
             "page": page,
             "size": size,
             "total": total,

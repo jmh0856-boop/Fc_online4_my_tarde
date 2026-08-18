@@ -12,6 +12,7 @@ class Trade(BaseModel):
     season_id: int | None = None
     season_name: str | None = None
     season_img: str | None = None
+    player_img: str | None = None
     grade: int
     value: int
 

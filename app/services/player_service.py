@@ -55,6 +55,12 @@ class PlayerService:
 
         return self._seasons_by_id.get(season_id)
 
+    def get_player_image_url(self, spid: int) -> str:
+        return (
+            "https://fco.dn.nexoncdn.co.kr/"
+            f"live/externalAssets/common/playersAction/p{spid}.png"
+        )
+
     async def get_player_info(self, spid: int) -> dict | None:
         await self._load_players()
         await self._load_seasons()
@@ -81,4 +87,5 @@ class PlayerService:
                 if season
                 else None
             ),
+            "player_img": self.get_player_image_url(spid),
         }
