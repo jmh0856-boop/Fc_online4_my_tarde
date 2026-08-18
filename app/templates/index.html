@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>FC Online 거래내역</title>
 
@@ -16,13 +20,25 @@
 
     <main class="container">
 
+        <!-- =========================
+             헤더
+        ========================= -->
+
         <header class="page-header">
+
             <h1>FC Online 거래내역</h1>
-            <p>구매 / 판매 거래내역을 확인하세요.</p>
+
+            <p>
+                구매 / 판매 거래내역을 확인하세요.
+            </p>
+
         </header>
 
 
-        <!-- 닉네임 검색 -->
+        <!-- =========================
+             닉네임 검색
+        ========================= -->
+
         <section class="search-box">
 
             <input
@@ -31,19 +47,26 @@
                 placeholder="FC Online 닉네임을 입력하세요"
             >
 
-            <button id="search-button">
+            <button
+                id="search-button"
+                type="button"
+            >
                 조회
             </button>
 
         </section>
 
 
-        <!-- 거래 종류 -->
-        <nav class="trade-tabs">
+        <!-- =========================
+             거래 종류
+        ========================= -->
+
+        <div class="trade-tabs">
 
             <button
                 class="trade-tab active"
                 data-type="all"
+                type="button"
             >
                 전체
             </button>
@@ -51,6 +74,7 @@
             <button
                 class="trade-tab"
                 data-type="buy"
+                type="button"
             >
                 구매
             </button>
@@ -58,22 +82,81 @@
             <button
                 class="trade-tab"
                 data-type="sell"
+                type="button"
             >
                 판매
             </button>
 
-        </nav>
+        </div>
 
 
-        <!-- 상태 -->
+        <!-- =========================
+             기간 검색
+        ========================= -->
+
+        <div class="date-filter">
+
+            <div class="date-field">
+
+                <label for="start-date">
+                    시작일
+                </label>
+
+                <input
+                    type="date"
+                    id="start-date"
+                >
+
+            </div>
+
+
+            <div class="date-separator">
+                ~
+            </div>
+
+
+            <div class="date-field">
+
+                <label for="end-date">
+                    종료일
+                </label>
+
+                <input
+                    type="date"
+                    id="end-date"
+                >
+
+            </div>
+
+
+            <button
+                id="date-search-button"
+                type="button"
+            >
+                기간 조회
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             상태
+        ========================= -->
+
         <div id="status"></div>
 
 
-        <!-- 거래 목록 -->
+        <!-- =========================
+             거래 목록
+        ========================= -->
+
         <section id="trade-list"></section>
 
 
-        <!-- 페이지네이션 -->
+        <!-- =========================
+             페이지네이션
+        ========================= -->
+
         <nav
             id="pagination"
             class="pagination"
@@ -82,9 +165,14 @@
     </main>
 
 
+    <!-- =========================
+         JavaScript
+    ========================= -->
+
     <script
         src="{{ url_for('static', path='js/app.js') }}"
     ></script>
 
 </body>
+
 </html>

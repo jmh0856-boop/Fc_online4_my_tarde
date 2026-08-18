@@ -5,6 +5,10 @@ const tradeList = document.getElementById("trade-list");
 const pagination = document.getElementById("pagination");
 const tabs = document.querySelectorAll(".trade-tab");
 
+const startDateInput = document.getElementById("start-date");
+const endDateInput = document.getElementById("end-date");
+const dateSearchButton = document.getElementById("date-search-button");
+
 let currentOuid = null;
 let currentTradeType = "all";
 let currentPage = 1;
@@ -21,11 +25,14 @@ async function searchNickname() {
     const nickname = nicknameInput.value.trim();
 
     if (!nickname) {
-        statusElement.textContent = "닉네임을 입력해주세요.";
+        statusElement.textContent =
+            "닉네임을 입력해주세요.";
+
         return;
     }
 
-    statusElement.textContent = "선수 정보를 조회하는 중...";
+    statusElement.textContent =
+        "선수 정보를 조회하는 중...";
 
     tradeList.innerHTML = "";
     pagination.innerHTML = "";
@@ -37,7 +44,9 @@ async function searchNickname() {
         );
 
         if (!response.ok) {
-            throw new Error("닉네임을 찾을 수 없습니다.");
+            throw new Error(
+                "닉네임을 찾을 수 없습니다."
+            );
         }
 
         const data = await response.json();
@@ -49,8 +58,10 @@ async function searchNickname() {
 
     } catch (error) {
 
-        statusElement.textContent = error.message;
+        console.error(error);
 
+        statusElement.textContent =
+            error.message;
     }
 }
 
@@ -65,35 +76,104 @@ async function loadTrades() {
         return;
     }
 
-    statusElement.textContent = "거래내역을 불러오는 중...";
+    statusElement.textContent =
+        "거래내역을 불러오는 중...";
+
     tradeList.innerHTML = "";
+    pagination.innerHTML = "";
 
     try {
 
-        const url =
-            `/trades/${currentOuid}` +
-            `?tradetype=${currentTradeType}` +
-            `&page=${currentPage}` +
-            `&size=${pageSize}`;
+        const params = new URLSearchParams();
 
-        const response = await fetch(url);
+        params.append(
+            "tradetype",
+            currentTradeType
+        );
 
-        if (!response.ok) {
-            throw new Error("거래내역 조회에 실패했습니다.");
+        params.append(
+            "page",
+            currentPage
+        );
+
+        params.append(
+            "size",
+            pageSize
+        );
+
+
+        // ==========================
+        // 시작일
+        // ==========================
+
+        if (
+            startDateInput &&
+            startDateInput.value
+        ) {
+
+            params.append(
+                "start_date",
+                startDateInput.value
+            );
         }
 
-        const data = await response.json();
+
+        // ==========================
+        // 종료일
+        // ==========================
+
+        if (
+            endDateInput &&
+            endDateInput.value
+        ) {
+
+            params.append(
+                "end_date",
+                endDateInput.value
+            );
+        }
+
+
+        const url =
+            `/trades/${currentOuid}?${params.toString()}`;
+
+        console.log(
+            "거래 조회:",
+            url
+        );
+
+
+        const response =
+            await fetch(url);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "거래내역 조회에 실패했습니다."
+            );
+        }
+
+
+        const data =
+            await response.json();
+
 
         renderTrades(data);
+
         renderPagination(data);
+
 
         statusElement.textContent =
             `총 ${data.total}건의 거래내역`;
 
+
     } catch (error) {
 
-        statusElement.textContent = error.message;
+        console.error(error);
 
+        statusElement.textContent =
+            error.message;
     }
 }
 
@@ -104,35 +184,91 @@ async function loadTrades() {
 
 function createTradeCard(trade) {
 
-    const isBuy = trade.trade_type === "buy";
+    const isBuy =
+        trade.trade_type === "buy";
 
-    const tradeLabel = isBuy
-        ? "🟢 구매"
-        : "🔴 판매";
 
-    const tradeClass = isBuy
-        ? "buy"
-        : "sell";
+    const tradeLabel =
+        isBuy
+            ? "🟢 구매"
+            : "🔴 판매";
 
-    const value = formatValue(trade.value);
 
-    const date = formatDate(trade.trade_date);
+    const tradeClass =
+        isBuy
+            ? "buy"
+            : "sell";
 
-    const card = document.createElement("article");
 
-    card.className = "trade-card";
+    const value =
+        formatValue(trade.value);
+
+
+    const date =
+        formatDate(trade.trade_date);
+
+
+    const seasonName =
+        getSeasonShortName(
+            trade.season_name
+        );
+
+
+    const card =
+        document.createElement("article");
+
+
+    card.className =
+        "trade-card";
+
 
     card.innerHTML = `
-        <div class="player-image-wrapper">
+
+        <!-- ==========================
+             선수 카드
+        =========================== -->
+
+        <div class="player-card">
+
+            <!-- 시즌 배경 -->
 
             <img
-                class="player-image"
+                class="card-season"
+                src="${trade.season_img}"
+                alt="${trade.season_name}"
+                loading="lazy"
+            >
+
+
+            <!-- 선수 이미지 -->
+
+            <img
+                class="card-player"
                 src="${trade.player_img}"
                 alt="${trade.player_name}"
                 loading="lazy"
             >
 
+
+            <!-- 강화 -->
+
+            <div class="card-grade">
+                +${trade.grade}
+            </div>
+
+
+            <!-- 선수 이름 -->
+
+            <div class="card-player-name">
+                ${trade.player_name}
+            </div>
+
         </div>
+
+
+        <!-- ==========================
+             거래 정보
+        =========================== -->
 
         <div class="trade-info">
 
@@ -140,13 +276,16 @@ function createTradeCard(trade) {
                 ${tradeLabel}
             </div>
 
+
             <div class="player-name">
                 ${trade.player_name}
             </div>
 
+
             <div class="season-info">
-                ${getSeasonShortName(trade.season_name)} · +${trade.grade}
+                ${seasonName} · +${trade.grade}
             </div>
+
 
             <div class="trade-date">
                 ${date}
@@ -154,10 +293,17 @@ function createTradeCard(trade) {
 
         </div>
 
+
+        <!-- ==========================
+             거래 금액
+        =========================== -->
+
         <div class="trade-value">
             ${value}
         </div>
+
     `;
+
 
     return card;
 }
@@ -171,17 +317,30 @@ function renderTrades(data) {
 
     tradeList.innerHTML = "";
 
-    if (!data.items || data.items.length === 0) {
+
+    if (
+        !data.items ||
+        data.items.length === 0
+    ) {
 
         tradeList.innerHTML =
-            `<p class="empty-message">거래내역이 없습니다.</p>`;
+            `
+            <p class="empty-message">
+                해당 기간의 거래내역이 없습니다.
+            </p>
+            `;
 
         return;
     }
 
-    for (const trade of data.items) {
 
-        const card = createTradeCard(trade);
+    for (
+        const trade of data.items
+    ) {
+
+        const card =
+            createTradeCard(trade);
+
 
         tradeList.appendChild(card);
     }
@@ -198,13 +357,26 @@ function getSeasonShortName(seasonName) {
         return "";
     }
 
-    // "25DP (25 Devoted Player)"
-    // → "25DP"
-    const match = seasonName.match(/^([^(]+)/);
+
+    /*
+        예:
+
+        25DP (25 Devoted Player)
+
+        ↓
+
+        25DP
+    */
+
+    const match =
+        seasonName.match(/^([^(]+)/);
+
 
     if (match) {
+
         return match[1].trim();
     }
+
 
     return seasonName;
 }
@@ -216,9 +388,17 @@ function getSeasonShortName(seasonName) {
 
 function formatValue(value) {
 
-    const trillion = 1_000_000_000_000;
-    const billion = 100_000_000;
-    const million = 10_000;
+    const trillion =
+        1_000_000_000_000;
+
+    const billion =
+        100_000_000;
+
+    const million =
+        10_000;
+
+
+    // 조
 
     if (value >= trillion) {
 
@@ -230,6 +410,9 @@ function formatValue(value) {
         );
     }
 
+
+    // 억
+
     if (value >= billion) {
 
         return (
@@ -239,6 +422,9 @@ function formatValue(value) {
             + "억 BP"
         );
     }
+
+
+    // 만
 
     if (value >= million) {
 
@@ -250,7 +436,11 @@ function formatValue(value) {
         );
     }
 
-    return value.toLocaleString("ko-KR") + " BP";
+
+    return (
+        value.toLocaleString("ko-KR")
+        + " BP"
+    );
 }
 
 
@@ -260,7 +450,9 @@ function formatValue(value) {
 
 function formatDate(dateString) {
 
-    const date = new Date(`${dateString}Z`);
+    const date =
+        new Date(`${dateString}Z`);
+
 
     return date.toLocaleString(
         "ko-KR",
@@ -284,12 +476,18 @@ function renderPagination(data) {
 
     pagination.innerHTML = "";
 
+
+    // 이전 버튼
+
     if (data.page > 1) {
 
         const previousButton =
             document.createElement("button");
 
-        previousButton.textContent = "‹";
+
+        previousButton.textContent =
+            "‹";
+
 
         previousButton.addEventListener(
             "click",
@@ -301,12 +499,19 @@ function renderPagination(data) {
             }
         );
 
-        pagination.appendChild(previousButton);
+
+        pagination.appendChild(
+            previousButton
+        );
     }
 
 
+    // 전체 페이지
+
     const totalPages =
-        Math.ceil(data.total / data.size);
+        Math.ceil(
+            data.total / data.size
+        );
 
 
     for (
@@ -318,33 +523,50 @@ function renderPagination(data) {
         const button =
             document.createElement("button");
 
-        button.textContent = page;
 
-        if (page === data.page) {
+        button.textContent =
+            page;
 
-            button.classList.add("active");
+
+        if (
+            page === data.page
+        ) {
+
+            button.classList.add(
+                "active"
+            );
         }
+
 
         button.addEventListener(
             "click",
             () => {
 
-                currentPage = page;
+                currentPage =
+                    page;
 
                 loadTrades();
             }
         );
 
-        pagination.appendChild(button);
+
+        pagination.appendChild(
+            button
+        );
     }
 
+
+    // 다음 버튼
 
     if (data.has_next) {
 
         const nextButton =
             document.createElement("button");
 
-        nextButton.textContent = "›";
+
+        nextButton.textContent =
+            "›";
+
 
         nextButton.addEventListener(
             "click",
@@ -356,7 +578,10 @@ function renderPagination(data) {
             }
         );
 
-        pagination.appendChild(nextButton);
+
+        pagination.appendChild(
+            nextButton
+        );
     }
 }
 
@@ -379,11 +604,12 @@ nicknameInput.addEventListener(
     "keydown",
     (event) => {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             searchNickname();
         }
-
     }
 );
 
@@ -394,24 +620,51 @@ nicknameInput.addEventListener(
 
 tabs.forEach((tab) => {
 
-    tab.addEventListener(
-        "click",
-        () => {
+    tab.addEventListener("click", () => {
 
-            tabs.forEach((item) => {
+        tabs.forEach((item) => {
+            item.classList.remove("active");
+        });
 
-                item.classList.remove("active");
-            });
+        tab.classList.add("active");
 
-            tab.classList.add("active");
+        currentTradeType = tab.dataset.type;
 
-            currentTradeType =
-                tab.dataset.type;
+        currentPage = 1;
 
-            currentPage = 1;
-
-            loadTrades();
-        }
-    );
+        loadTrades();
+    });
 
 });
+
+
+// ==============================
+// 기간 검색
+// ==============================
+
+if (dateSearchButton) {
+
+    dateSearchButton.addEventListener("click", () => {
+
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+
+        // 둘 다 입력했을 때 날짜 검사
+        if (startDate && endDate) {
+
+            if (startDate > endDate) {
+
+                statusElement.textContent =
+                    "시작일은 종료일보다 늦을 수 없습니다.";
+
+                return;
+            }
+        }
+
+        currentPage = 1;
+
+        loadTrades();
+
+    });
+
+}

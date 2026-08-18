@@ -56,12 +56,16 @@ class NexonClient:
         self,
         ouid: str,
         trade_type: str,
+        offset: int,
+        limit: int,
     ):
         return await self._get(
             "/fconline/v1/user/trade",
             params={
                 "ouid": ouid,
                 "tradetype": trade_type,
+                "offset": offset,
+                "limit": limit,
             },
         )
 

@@ -2,7 +2,7 @@ from enum import Enum
 
 from fastapi import APIRouter, Depends, Query
 
-from app.schemas.trade import TradeList
+from app.schemas.trade import Trade
 from app.services.nexon_client import NexonClient
 from app.services.player_service import PlayerService
 from app.services.trade_service import TradeService
@@ -30,24 +30,36 @@ def get_trade_service() -> TradeService:
     )
 
 
-@router.get("/{ouid}", response_model=TradeList)
+@router.get("/{ouid}", response_model=dict)
 async def get_trades(
     ouid: str,
+
     tradetype: TradeType = Query(
         default=TradeType.BUY,
-        description="거래 유형: buy, sell 또는 all",
+        description="거래 유형: buy, sell, all",
     ),
+
+    start_date: str | None = Query(
+        default=None,
+        description="조회 시작일 (YYYY-MM-DD)",
+    ),
+
+    end_date: str | None = Query(
+        default=None,
+        description="조회 종료일 (YYYY-MM-DD)",
+    ),
+
     page: int = Query(
         default=1,
         ge=1,
-        description="페이지 번호",
     ),
+
     size: int = Query(
-        default=20,
+        default=10,
         ge=1,
         le=100,
-        description="페이지 크기",
     ),
+
     service: TradeService = Depends(get_trade_service),
 ):
     return await service.get_trades(
@@ -55,4 +67,6 @@ async def get_trades(
         tradetype.value,
         page,
         size,
+        start_date,
+        end_date,
     )

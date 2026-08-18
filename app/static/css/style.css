@@ -509,6 +509,24 @@ body {
         text-align: center;
     }
 
+    .date-filter {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+    }
+
+    .date-separator {
+        display: none;
+    }
+
+    #date-search-button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+
     /* 거래 카드 */
 
     .trade-card {
@@ -595,4 +613,82 @@ body {
 
         font-size: 16px;
     }
+}
+
+
+/* =========================
+   기간 검색
+========================= */
+
+.date-filter {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+
+    margin-bottom: 20px;
+
+    padding: 16px;
+
+    background: white;
+
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+}
+
+.date-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.date-field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #666;
+}
+
+.date-field input {
+    height: 42px;
+
+    padding: 0 10px;
+
+    border: 1px solid #ddd;
+    border-radius: 7px;
+
+    background: white;
+
+    font-size: 14px;
+}
+
+.date-field input:focus {
+    outline: none;
+    border-color: #999;
+}
+
+.date-separator {
+    padding-bottom: 10px;
+
+    color: #999;
+    font-weight: 700;
+}
+
+#date-search-button {
+    height: 42px;
+
+    padding: 0 18px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #222;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+#date-search-button:hover {
+    opacity: 0.85;
 }
